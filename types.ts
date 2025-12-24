@@ -4,6 +4,10 @@ export interface Project {
   description: string;
   image: string;
   tags: string[];
+  demoUrl?: string;
+  repoUrl?: string;
+  linkText?: string;
+  hideRepoIcon?: boolean;
 }
 
 export interface Experience {

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, Sparkles } from 'lucide-react';
 import { createChatSession } from '../services/geminiService';
 import { ChatMessage } from '../types';
 import { GenerateContentResponse } from '@google/genai';
@@ -85,34 +85,45 @@ const ChatWidget = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {isOpen && (
-        <div className="bg-white rounded-2xl shadow-2xl w-80 md:w-96 mb-4 flex flex-col overflow-hidden border border-gray-100 transition-all animate-fade-in-up" style={{ height: '500px' }}>
-          <div className="bg-gray-900 p-4 flex justify-between items-center">
-            <h3 className="text-white font-bold flex items-center gap-2">
-              <MessageSquare size={18} />
+        <div className="bg-white rounded-3xl shadow-2xl w-80 md:w-96 mb-6 flex flex-col overflow-hidden border border-slate-100 transition-all origin-bottom-right animate-fade-in-up" style={{ height: '520px' }}>
+          <div className="bg-slate-900 p-5 flex justify-between items-center relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500 rounded-full mix-blend-overlay filter blur-xl opacity-20"></div>
+            <h3 className="text-white font-bold flex items-center gap-2 relative z-10">
+              <div className="p-1.5 bg-white/10 rounded-lg">
+                <Sparkles size={16} className="text-blue-300" />
+              </div>
               Ask AI
             </h3>
-            <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white">
+            <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white transition-colors relative z-10">
               <X size={20} />
             </button>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+          <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-slate-50">
             {messages.map(msg => (
               <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${msg.role === 'user' ? 'bg-gray-900 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'}`}>
+                {msg.role === 'model' && (
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 mr-2 mt-auto mb-1">
+                     <Bot size={12} className="text-white"/>
+                  </div>
+                )}
+                <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${msg.role === 'user' ? 'bg-slate-900 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none'}`}>
                   {msg.text}
                 </div>
               </div>
             ))}
             {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-none px-4 py-2 shadow-sm">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-75"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-150"></div>
+              <div className="flex justify-start items-end">
+                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 mr-2 mb-1">
+                     <Bot size={12} className="text-white"/>
+                 </div>
+                <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-none px-4 py-3 shadow-sm">
+                  <div className="flex space-x-1.5">
+                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
+                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-75"></div>
+                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-150"></div>
                   </div>
                 </div>
               </div>
@@ -120,19 +131,19 @@ const ChatWidget = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          <form onSubmit={handleSubmit} className="p-3 bg-white border-t border-gray-100">
+          <form onSubmit={handleSubmit} className="p-3 bg-white border-t border-slate-100">
             <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Type a message..."
-                className="flex-1 p-2 bg-gray-100 rounded-full px-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200"
+                className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all placeholder:text-slate-400"
               />
               <button 
                 type="submit" 
                 disabled={!input.trim() || isTyping}
-                className="p-2 bg-gray-900 text-white rounded-full hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-3 bg-slate-900 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-slate-900 transition-colors shadow-md"
               >
                 <Send size={16} />
               </button>
@@ -143,9 +154,13 @@ const ChatWidget = () => {
 
       <button
         onClick={toggleChat}
-        className="bg-gray-900 hover:bg-gray-800 text-white p-4 rounded-full shadow-lg transition-transform hover:scale-110 flex items-center justify-center"
+        className="group relative bg-slate-900 hover:bg-blue-600 text-white p-4 rounded-full shadow-xl hover:shadow-2xl hover:shadow-blue-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center"
       >
+        <div className="absolute inset-0 rounded-full border border-white/10"></div>
         {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
+        {!isOpen && (
+           <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white rounded-full"></span>
+        )}
       </button>
     </div>
   );

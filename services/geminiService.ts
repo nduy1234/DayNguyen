@@ -18,7 +18,7 @@ export const generateSpeech = async (text: string): Promise<AudioBuffer | null> 
         responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Kore' },
+            prebuiltVoiceConfig: { voiceName: 'Puck' },
           },
         },
       },
