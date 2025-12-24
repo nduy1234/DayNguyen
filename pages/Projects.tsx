@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Project } from '../types';
 import { ArrowUpRight, Github } from 'lucide-react';
 
-const projects: Project[] = [
+const projectsData: Project[] = [
   {
     id: 4,
     title: "BrandAI",
@@ -17,9 +17,9 @@ const projects: Project[] = [
     id: 5,
     title: "My Healthcare App",
     description: "Project featuring a modern application interface design for healthcare appointments",
-    image: "https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1576091160550-217358c7c8c8?auto=format&fit=crop&w=800&q=80",
     tags: ["UI/UX Design", "Healthcare", "Framer"],
-    repoUrl: "https://framer.com/projects/My-Doc-Appt--V43wzx3kaDOjv17eCeXE-bdEYE?node=augiA20Il",
+    repoUrl: "https://github.com/nduy1234/AvaAI",
     linkText: "Link",
     hideRepoIcon: true
   },
@@ -125,10 +125,123 @@ const projects: Project[] = [
   }
 ];
 
-const Projects = () => {
+// Hook for scroll animations
+const useIntersectionObserver = (options = {}) => {
+  const elementRef = useRef<HTMLElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setIsVisible(true);
+        observer.disconnect(); // Trigger once
+      }
+    }, options);
+
+    const el = elementRef.current;
+    if (el) observer.observe(el);
+
+    return () => {
+      if (el) observer.unobserve(el);
+    };
+  }, [options]);
+
+  return [elementRef, isVisible] as const;
+};
+
+// Extracted Project Card Component for cleaner logic and individual animation state
+interface ProjectCardProps {
+  project: Project;
+  index: number;
+}
+
+const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
+  const [titleRef, isTitleVisible] = useIntersectionObserver({ threshold: 0.1 });
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 animate-fade-in-up">
-      <header className="mb-20">
+    <article 
+      className={`flex flex-col md:flex-row gap-16 items-center ${index % 2 !== 0 ? 'md:flex-row-reverse' : ''} group`}
+      aria-labelledby={`project-title-${project.id}`}
+    >
+       {/* Image */}
+       <div className="w-full md:w-7/12 relative overflow-hidden rounded-[2rem] shadow-xl shadow-slate-200 transition-all duration-500 ease-out group-hover:shadow-2xl group-hover:shadow-blue-900/10 group-hover:-translate-y-2">
+          <div className="aspect-video bg-slate-100 relative overflow-hidden group/image">
+              <img 
+                  src={project.image} 
+                  alt={`Screenshot of ${project.title}`} 
+                  className="w-full h-full object-cover transform transition-transform duration-700 ease-in-out group-hover/image:scale-105"
+              />
+              <div className="absolute inset-0 bg-slate-900/0 group-hover/image:bg-slate-900/5 transition-colors duration-500" aria-hidden="true"></div>
+          </div>
+       </div>
+
+       {/* Content */}
+       <div className="w-full md:w-5/12 space-y-6">
+          <div className="flex flex-col items-start">
+             <span className="text-6xl font-bold text-slate-100 -mb-8 -ml-4 select-none z-0 relative transition-colors duration-500 group-hover:text-slate-200" aria-hidden="true">
+                {(index + 1).toString().padStart(2, '0')}
+             </span>
+             <h2 
+               id={`project-title-${project.id}`} 
+               ref={titleRef as React.RefObject<HTMLHeadingElement>}
+               className={`text-3xl md:text-4xl font-bold text-slate-900 relative z-10 transition-all duration-1000 ease-out transform ${
+                 isTitleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+               } group-hover:text-blue-600`}
+             >
+                {project.title}
+             </h2>
+          </div>
+          
+          <p className="text-slate-600 leading-relaxed text-lg">{project.description}</p>
+          
+          <ul className="flex flex-wrap gap-2 pt-2" aria-label={`Technologies used in ${project.title}`}>
+            {project.tags.map(tag => (
+              <li key={tag}>
+                <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-semibold tracking-wide uppercase border border-slate-200">
+                    {tag}
+                </span>
+              </li>
+            ))}
+          </ul>
+          
+          <div className="pt-6 flex flex-wrap gap-4 items-center">
+              {project.demoUrl && (
+                  <a 
+                      href={project.demoUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="flex items-center gap-2 text-slate-900 font-bold hover:text-blue-600 transition-colors group/btn focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg px-2 py-1 -ml-2"
+                      aria-label={`Live Demo for ${project.title} (opens in new tab)`}
+                  >
+                      Live Demo
+                      <ArrowUpRight size={20} className="transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" aria-hidden="true" />
+                  </a>
+              )}
+              
+              {project.repoUrl && (
+                  <a 
+                      href={project.repoUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="flex items-center gap-2 text-slate-500 font-medium hover:text-slate-900 transition-colors mr-4 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 rounded-lg px-2 py-1"
+                      aria-label={`Source Code for ${project.title} (opens in new tab)`}
+                  >
+                      {!project.hideRepoIcon && <Github size={18} aria-hidden="true" />}
+                      {project.linkText || "Source Code"}
+                  </a>
+              )}
+          </div>
+       </div>
+    </article>
+  );
+};
+
+const Projects = () => {
+  const [projects, setProjects] = useState<Project[]>(projectsData);
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <header className="mb-20 animate-fade-in-up">
         <h1 className="text-5xl md:text-6xl font-bold font-heading text-slate-900 mb-6">Projects</h1>
         <p className="text-slate-500 text-xl font-light max-w-2xl">
           Selected works and creative experiments
@@ -138,63 +251,11 @@ const Projects = () => {
       {/* Project List */}
       <section className="space-y-32" aria-label="Project List">
         {projects.map((project, index) => (
-          <article key={project.id} className={`flex flex-col md:flex-row gap-16 items-center ${index % 2 !== 0 ? 'md:flex-row-reverse' : ''} group`}>
-             {/* Image */}
-             <div className="w-full md:w-7/12 relative cursor-pointer overflow-hidden rounded-[2rem] shadow-xl shadow-slate-200 transition-all duration-500 ease-out group-hover:shadow-2xl group-hover:shadow-blue-900/10 group-hover:-translate-y-2">
-                <div className="aspect-video bg-slate-100 relative overflow-hidden">
-                    <img 
-                        src={project.image} 
-                        alt={`Screenshot of ${project.title}`} 
-                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-in-out" 
-                    />
-                    <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/5 transition-colors duration-500"></div>
-                </div>
-             </div>
-
-             {/* Content */}
-             <div className="w-full md:w-5/12 space-y-6">
-                <div className="flex flex-col items-start">
-                   <span className="text-6xl font-bold text-slate-100 -mb-8 -ml-4 select-none z-0 relative transition-colors duration-500 group-hover:text-slate-200">0{index + 1}</span>
-                   <h2 className="text-3xl md:text-4xl font-bold text-slate-900 relative z-10 transition-colors duration-300 group-hover:text-blue-600">{project.title}</h2>
-                </div>
-                
-                <p className="text-slate-600 leading-relaxed text-lg">{project.description}</p>
-                
-                <div className="flex flex-wrap gap-2 pt-2" aria-label="Technologies used">
-                  {project.tags.map(tag => (
-                    <span key={tag} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-semibold tracking-wide uppercase border border-slate-200">
-                        {tag}
-                    </span>
-                  ))}
-                </div>
-                
-                <div className="pt-6 flex flex-wrap gap-6 items-center">
-                    {project.demoUrl && (
-                        <a 
-                            href={project.demoUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="flex items-center gap-2 text-slate-900 font-bold hover:text-blue-600 transition-colors group/btn"
-                        >
-                            Live Demo
-                            <ArrowUpRight size={20} className="transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
-                        </a>
-                    )}
-                    
-                    {project.repoUrl && (
-                        <a 
-                            href={project.repoUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="flex items-center gap-2 text-slate-500 font-medium hover:text-slate-900 transition-colors"
-                        >
-                            {!project.hideRepoIcon && <Github size={18} />}
-                            {project.linkText || "Source Code"}
-                        </a>
-                    )}
-                </div>
-             </div>
-          </article>
+          <ProjectCard 
+            key={project.id} 
+            project={project} 
+            index={index} 
+          />
         ))}
       </section>
     </div>
